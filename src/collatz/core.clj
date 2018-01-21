@@ -2,10 +2,10 @@
   (:gen-class)
   (:use seesaw.core
         seesaw.chooser
-        ;;mikera.image.core
         ;;clojure.math.numeric-tower
         )
   (:require [clojure.math.numeric-tower :as math]
+            [mikera.image.core :as mik]
             )
   (:import [org.apache.commons.math3.distribution NormalDistribution]
            [org.apache.commons.math3.analysis.function Log]
