@@ -7,7 +7,8 @@
                  [seesaw "1.4.5"]
                  [org.apache.commons/commons-math3 "3.6"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [net.mikera/imagez "0.12.0"]
+                 ;;[gnuplot "0.1.1"]
+                 ;;[net.mikera/imagez "0.12.0"]
                  ;;[ch.cern/cernlib "2005-1.4"]
                  ]
   :main ^:skip-aot collatz.core

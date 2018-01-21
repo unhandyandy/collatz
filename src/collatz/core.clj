@@ -2,10 +2,19 @@
   (:gen-class)
   (:use seesaw.core
         seesaw.chooser
+   ;; mikera.image.core
+   ;; mikera.image.colours
+   ;; mikera.image.filters
+   ;; mikera.image.spectrum
         ;;clojure.math.numeric-tower
         )
   (:require [clojure.math.numeric-tower :as math]
-            [mikera.image.core :as mik]
+            ;;[gnuplot.core :as gp]
+            ;;[mikera.image.core :as mik]
+            ;;[mikera.image.colours :as col]
+            ;;[mikera.image.filters :as fil]
+            ;;[mikera.image.spectrum :as spec]
+            [clojure.java.io :as io]
             )
   (:import [org.apache.commons.math3.distribution NormalDistribution]
            [org.apache.commons.math3.analysis.function Log]
@@ -175,7 +184,8 @@
         newpool (if test pool
                     (assoc (vec pool) randi newone))]
     (when (>= newscore bestscore)
-      (println (str newbest)))
+      (println (str newbest))
+      (gene-evo gene))
     (list newbest newpool)))
 
 (defn met-evolve [[best pool :as pair]]
@@ -198,7 +208,64 @@
          n n]
     (if (= n 0) st
         (recur (met-evolve st) (dec n)))))
-              
+
+(defn alts "count alternations on right, looking for 1 at start" [seq]
+  (loop [[a & tail] (reverse seq)
+         l 0
+         b 1]
+    (if (= a b)
+      (recur tail (inc l) (- 1 b))
+      l)))
+
+(defn padline "pad line of bits to given length with r 0s on right"
+  [len [seq r]]
+  (let [l (- len r (count seq))]
+    (concat (repeat l 0) seq (repeat r 0))))
+
+(defn evo "make tab of evolution of seq (from gene)" [gene]
+  (let [rec (loop [seq (gene->seq gene)
+                   r 0
+                   tab '()]
+              (if (< (count seq) 67) (conj tab (list seq r))
+                  (let [z (dec (alts seq))]
+                    (recur (trim0 (nextstep seq)) (+ r z) (conj tab (list seq r))))))
+        len (apply max (map #(+ (count (first %)) (second %)) rec))]
+        (map #(padline len %) rec)))
+
+(defn mk-gp-cmd "make string for gnuplot to display file fn" [fn h w]
+  (list "gnuplot" "-p" "-e" (str "``set " "xrange " "[1:" (str w) "]; " "set " "yrange " "[1:" (str h) "]; " "plot '" fn "' matrix with image``")))
+
+(defn tab->str [tab]
+  (let [lines (map #(clojure.string/join "\t" %) tab)]
+    (clojure.string/join "\n" lines)))
+
+(defn save-tab
+  [tab fnm]
+  (let [fw (io/file fnm)
+        clobber (atom false)]
+    (if (.exists fw)
+      (let [dial (dialog :content (str "File " fw " exists, do you want to overwrite it?")
+                         :success-fn (fn [e] (reset! clobber true))
+                         :type :warning
+                         :option-type :yes-no)]
+        (pack! dial)
+        (show! dial))
+      (reset! clobber true))
+    (if (and fw @clobber)
+      (spit fw (tab->str tab)))))
+
+(defn viewtab
+  ([tab] (viewtab tab (str (java.time.LocalDateTime/now))))
+  ([tab fnm]
+   (save-tab tab fnm)
+   (let [h (count tab)
+         w (count (first tab))
+         cmd (mk-gp-cmd fnm h w)]
+     (apply clojure.java.shell/sh cmd))))
+   
+(defn gene-evo [g]
+  (viewtab (evo g)))
+            
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
