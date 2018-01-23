@@ -142,15 +142,19 @@
   (let [newscore (fitness gene)
         newp (math/expt 2 newscore)
         newone (list newscore gene)
-        randi (rand-int popl)
-        oldscore (first (nth pool randi))
+        ;;randi (rand-int popl)
+        [worst oks] (extract-worst pool)
+        ;;oldscore (first (nth pool randi))
+        oldscore (first worst)
         oldp (math/expt 2 oldscore)
         bestscore (first best)
         newbest (if (< newscore bestscore) best newone)
         rat (/ oldp (+ oldp newp))
         check (< (rand) rat)
         newpool (if check pool
-                    (assoc (vec pool) randi newone))]
+                    ;;(assoc (vec pool) randi newone)
+                    (conj oks newone)
+                    )]
     (when (>= newscore bestscore)
       (println (str newbest))
       (future (gene-evo gene)))
@@ -244,6 +248,18 @@
 (defn gogen [st n]
   (swap! st generations n)
   (get-stats @st))
+
+(defn extract-worst "returns worst entry of pool and the pool without that entry"
+  [pool]
+  (loop [res '()
+         worst (first pool)
+         rem (rest pool)]
+    (if (= (count rem) 0)
+      (list worst res)
+      (let [[h & t] rem]
+        (if (< (first worst) (first h))
+          (recur (conj res h) worst t)
+          (recur (conj res worst) h t))))))
 
 (defn -main
   "I don't do a whole lot ... yet."
