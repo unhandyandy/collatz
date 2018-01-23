@@ -2,19 +2,9 @@
   (:gen-class)
   (:use seesaw.core
         seesaw.chooser
-   ;; mikera.image.core
-   ;; mikera.image.colours
-   ;; mikera.image.filters
-   ;; mikera.image.spectrum
-        ;;clojure.math.numeric-tower
         )
   (:require [clojure.math.numeric-tower :as math]
-            ;;[gnuplot.core :as gp]
-            ;;[mikera.image.core :as mik]
-            ;;[mikera.image.colours :as col]
-            ;;[mikera.image.filters :as fil]
-            ;;[mikera.image.spectrum :as spec]
-            [clojure.java.io :as io]
+             [clojure.java.io :as io]
             )
   (:import [org.apache.commons.math3.distribution NormalDistribution]
            [org.apache.commons.math3.analysis.function Log]
@@ -29,19 +19,6 @@
         carry (if (> sum 1) 1 0)]
     (list carry newbit)))
 
-;; (defn nextstepaux "iterate sequence" [s c acc]
-;;   (if (= (count s) 1)
-;;     (let [[a] s
-;;           [carry newbit] (plus3 a 0 c)]
-;;       (concat (list carry newbit) acc))
-;;     (let [[a b] s
-;;           [carry newbit] (plus3 a b c)
-;;           news (drop 1 s)
-;;           newacc (conj acc newbit)]
-;;       (nextstepaux news carry newacc))))
-
-;; (defn nextstep "wrapper" [s]
-;;   (nextstepaux (reverse s) 1 '()))
 
 (defn nextstep "iterate through sequence" [seq]
   (loop [s (reverse seq)
@@ -69,11 +46,6 @@
 
 (defn trim0 [l]
   (trimL 0 (trimR 0 l)))
-
-;; (defn lifeaux "calc life using accumulator" [s t]
-;;   (if (< (count s) 67)
-;;     t
-;;     (lifeaux (trim0 (nextstep s)) (+ t 1))))
   
 (defn life "calculate the life of a seq till length is < 67" [seq]
   (loop [s seq
@@ -149,15 +121,6 @@
         (reset! bg cur)))
     @bg))
 
-;; (defn detect-aux [a b]
-;;   (* b (inc a)))
-  
-
-;; (defn detect-ones [l]
-;;   (let [ones (reductions detect-aux l)
-;;         mx (apply max ones)
-;;         ind (
-
 (defn find-overlap [s1 s2]
   (let [bi (atom -1)
         prev (atom 0)
@@ -172,7 +135,9 @@
             (reset! bi i)))
         (reset! prev 0)))
       @bi))
-            
+
+(def gene-evo)
+
 (defn competition "determine whether new gene enters pool" [pool best gene len popl]
   (let [newscore (fitness gene)
         newone (list newscore gene)
@@ -185,7 +150,7 @@
                     (assoc (vec pool) randi newone))]
     (when (>= newscore bestscore)
       (println (str newbest))
-      (gene-evo gene))
+      (future (gene-evo gene)))
     (list newbest newpool)))
 
 (defn met-evolve [[best pool :as pair]]
