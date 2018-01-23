@@ -140,13 +140,16 @@
 
 (defn competition "determine whether new gene enters pool" [pool best gene len popl]
   (let [newscore (fitness gene)
+        newp (math/expt 2 newscore)
         newone (list newscore gene)
         randi (rand-int popl)
         oldscore (first (nth pool randi))
+        oldp (math/expt 2 oldscore)
         bestscore (first best)
         newbest (if (< newscore bestscore) best newone)
-        test (< (rand) (/ oldscore (+ oldscore newscore)))
-        newpool (if test pool
+        rat (/ oldp (+ oldp newp))
+        check (< (rand) rat)
+        newpool (if check pool
                     (assoc (vec pool) randi newone))]
     (when (>= newscore bestscore)
       (println (str newbest))
@@ -230,7 +233,18 @@
    
 (defn gene-evo [g]
   (viewtab (evo g)))
-            
+
+(defn get-stats [[b p]]
+  (let [fs (map first p)
+        mn (apply min fs)
+        mx (apply max fs)
+        m (/ (apply + fs) (count fs))]
+    (list mn m mx (first b))))
+
+(defn gogen [st n]
+  (swap! st generations n)
+  (get-stats @st))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
