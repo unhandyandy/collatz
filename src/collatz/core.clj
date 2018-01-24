@@ -138,7 +138,9 @@
 
 (def gene-evo)
 
-(defn competition "determine whether new gene enters pool" [pool best gene len popl]
+(defn competition
+  "determine whether new gene enters pool"
+  [[best pool] gene len popl]
   (let [newscore (fitness gene)
         newp (math/expt 2 newscore)
         newone (list newscore gene)
@@ -155,24 +157,29 @@
                     ;;(assoc (vec pool) randi newone)
                     (conj oks newone)
                     )]
-    (when (>= newscore bestscore)
+    (when (> newscore bestscore)
       (println (str newbest))
       (future (gene-evo gene)))
     (list newbest newpool)))
 
-(defn met-evolve [[best pool :as pair]]
-  (let [len (count (second (first pool)))
-        popl (count pool)
-        g1 (vec (second (nth pool (rand-int popl))))
-        g2 (vec (second (nth pool (rand-int popl))))
-        cut (find-overlap g1 g2)
+(defn mate [[best pool :as pair] len popl mrate g1 g2]
+  (let [cut (find-overlap g1 g2)
         splice (concat (subvec g1 0 cut) (subvec g2 cut))
-        mrate (/ 3 len)
         newgene (mutate mrate splice)
         old? (some #(= newgene (second %)) pool)]
     (if old?
       pair
-      (competition pool best newgene len popl))))
+      (competition pair newgene len popl))))
+
+(defn met-evolve [[best pool :as pair]]
+  (let [len (count (second (first pool)))
+        popl (count pool)
+        mrate (/ 3 len)
+        g1 (vec (second (nth pool (rand-int popl))))
+        g2 (vec (second (nth pool (rand-int popl))))
+        close? (< (seq-diff g1 g2) (* 3 mrate))]
+    (if close? pair
+        (mate pair len popl mrate g1 g2))))
 
 (defn generations "iterate met-evolve for n generations applied to st"
   [st n]
@@ -260,6 +267,11 @@
         (if (< (first worst) (first h))
           (recur (conj res h) worst t)
           (recur (conj res worst) h t))))))
+
+(defn seq-diff
+  "count number of places where seq's differ; must have same length"
+  [s1 s2]
+  (count (filter #(= % true) (map = s1 s2))))
 
 (defn -main
   "I don't do a whole lot ... yet."
