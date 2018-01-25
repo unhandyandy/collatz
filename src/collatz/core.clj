@@ -137,6 +137,7 @@
       @bi))
 
 (def gene-evo)
+(def extract-worst)
 
 (defn competition
   "determine whether new gene enters pool"
@@ -171,13 +172,15 @@
       pair
       (competition pair newgene len popl))))
 
+(def seq-diff)
+
 (defn met-evolve [[best pool :as pair]]
   (let [len (count (second (first pool)))
         popl (count pool)
         mrate (/ 3 len)
         g1 (vec (second (nth pool (rand-int popl))))
         g2 (vec (second (nth pool (rand-int popl))))
-        close? (< (seq-diff g1 g2) 9)]
+        close? (< (seq-diff g1 g2) (* 0.1 len))]
     (if close? pair
         (mate pair len popl mrate g1 g2))))
 
@@ -254,7 +257,8 @@
 
 (defn gogen [st n]
   (swap! st generations n)
-  (get-stats @st))
+  (get-stats @st)
+  (ave-dist-pool (second @state)))
 
 (defn extract-worst "returns worst entry of pool and the pool without that entry"
   [pool]
@@ -271,18 +275,26 @@
 (defn seq-diff
   "count number of places where seq's differ; must have same length"
   [s1 s2]
-  (count (filter #(= % true) (map = s1 s2))))
+  (count (filter #(= % false) (map = s1 s2))))
 
 (defn mean [l] (/ (apply + l) (count l)))
 
-(defn ave-dist [p pool]
-  (mean (map #(deq-diff p %) pool)))
+(defn total-dist [p pool]
+  (apply + (map #(seq-diff p %) pool)))
 
 (defn ave-dist-pool
   "calculate the average distance across the given pool"
   [pool]
-  (let [genes (map second pool)]
-    (mean (map #(ave-dist % genes) genes))))
+  (let [len (count pool)
+        div (/ (* len (dec len)) 2.0)
+        genes (map second pool)
+        sum (loop [s 0
+                   [h & t] genes]
+              ;;(println (count t))
+              (if (empty? t)
+                s
+                (recur (+ s (total-dist h t)) t)))]
+    (/ sum div)))
 
 (defn -main
   "I don't do a whole lot ... yet."
