@@ -177,7 +177,7 @@
         mrate (/ 3 len)
         g1 (vec (second (nth pool (rand-int popl))))
         g2 (vec (second (nth pool (rand-int popl))))
-        close? (< (seq-diff g1 g2) (* 3 mrate))]
+        close? (< (seq-diff g1 g2) 9)]
     (if close? pair
         (mate pair len popl mrate g1 g2))))
 
@@ -272,6 +272,17 @@
   "count number of places where seq's differ; must have same length"
   [s1 s2]
   (count (filter #(= % true) (map = s1 s2))))
+
+(defn mean [l] (/ (apply + l) (count l)))
+
+(defn ave-dist [p pool]
+  (mean (map #(deq-diff p %) pool)))
+
+(defn ave-dist-pool
+  "calculate the average distance across the given pool"
+  [pool]
+  (let [genes (map second pool)]
+    (mean (map #(ave-dist % genes) genes))))
 
 (defn -main
   "I don't do a whole lot ... yet."
