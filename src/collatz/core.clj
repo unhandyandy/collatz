@@ -257,8 +257,8 @@
 
 (defn gogen [st n]
   (swap! st generations n)
-  (get-stats @st)
-  (ave-dist-pool (second @state)))
+  (println (get-stats @st))
+  (println (ave-dist-pool (second @state))))
 
 (defn extract-worst "returns worst entry of pool and the pool without that entry"
   [pool]
