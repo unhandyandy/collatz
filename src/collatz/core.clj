@@ -284,8 +284,8 @@
 
 (defn ave-dist-pool
   "calculate the average distance across the given pool"
-  [pool]
-  (let [len (count pool)
+  ([pool]
+   (let [len (count pool)
         div (/ (* len (dec len)) 2.0)
         genes (map second pool)
         sum (loop [s 0
@@ -294,7 +294,17 @@
               (if (empty? t)
                 s
                 (recur (+ s (total-dist h t)) t)))]
-    (/ sum div)))
+     (/ sum div)))
+  ([p1 p2]
+   (let [g1 (map second p1)
+         g2 (map second p2)
+         pop1 (count g1)
+         pop2 (count g2)
+         div (* pop1 pop2)
+         dlist (map #(total-dist % g2) g1)]
+     (/ (apply + dlist) div))))
+    
+    
 
 (defn -main
   "I don't do a whole lot ... yet."
