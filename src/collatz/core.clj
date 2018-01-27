@@ -221,6 +221,7 @@
   (let [lines (map #(clojure.string/join "\t" %) tab)]
     (clojure.string/join "\n" lines)))
 
+(set! *print-length* nil)
 (defn save-tab
   [tab fnm]
   (let [fw (io/file fnm)
@@ -248,17 +249,29 @@
 (defn gene-evo [g]
   (viewtab (evo g)))
 
-(defn get-stats [[b p]]
-  (let [fs (map first p)
-        mn (apply min fs)
-        mx (apply max fs)
-        m (/ (apply + fs) (count fs))]
-    (list mn m mx (first b))))
+(defn get-stats
+  ([b p]
+   (let [fs (map first p)
+         [mn m mx] (get-stats fs)]
+     (list mn m mx (first b))))
+  ([lst]
+   (let [mn (apply min lst)
+         mx (apply max lst)
+         m (/ (apply + lst) (count lst))]
+     (list mn m mx))))
+
+(def ave-dist-pool)
 
 (defn gogen [st n]
   (swap! st generations n)
-  (println (get-stats @st))
-  (println (ave-dist-pool (second @state))))
+  (println (apply get-stats @st))
+  (println (ave-dist-pool (second @st))))
+
+(defn gotarget [st targ]
+  (while (< (first (first @st)) targ)
+    (swap! st generations 1000))
+  (println (apply get-stats @st))
+  (println (ave-dist-pool (second @st))))
 
 (defn extract-worst "returns worst entry of pool and the pool without that entry"
   [pool]
@@ -304,6 +317,33 @@
          dlist (map #(total-dist % g2) g1)]
      (/ (apply + dlist) div))))
     
+(defn save-state [st]
+  (let [ststr (prn-str st)
+        fw (choose-file :type :save)
+        clobber (atom false)]
+    (if (.exists fw)
+      (let [dial (dialog :content (str "File " fw " exists, do you want to overwrite it?")
+                         :success-fn (fn [e] (reset! clobber true))
+                         :type :warning
+                         :option-type :yes-no)]
+        (pack! dial)
+        (show! dial))
+      (reset! clobber true))
+    (if (and fw @clobber)
+      (spit fw ststr))))
+
+(defn read-state []
+  (let [stfile (choose-file :type :open
+                             :selection-mode :files-only)]
+    (when stfile
+      (read-string (slurp stfile)))))
+
+(defn gene-sensitivity [gene]
+  (let [len (count gene)
+        gv (vec gene)
+        vars (map #(assoc gv % (- 1 (get gv %))) (range len))
+        fs (map #(list (fitness %1) %2) vars (range len))]
+    fs))
     
 
 (defn -main
