@@ -344,7 +344,12 @@
         vars (map #(assoc gv % (- 1 (get gv %))) (range len))
         fs (map #(list (fitness %1) %2) vars (range len))]
     fs))
-    
+
+(defn new6 [len]
+  (let [pool (rand-pool len len)
+        state (atom (list (get-best-in-pool pool) pool))]
+    (gotarget state 6)
+    @state))
 
 (defn -main
   "I don't do a whole lot ... yet."
