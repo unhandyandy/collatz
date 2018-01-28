@@ -268,10 +268,19 @@
   (println (ave-dist-pool (second @st))))
 
 (defn gotarget [st targ]
-  (while (< (first (first @st)) targ)
-    (swap! st generations 1000))
-  (println (apply get-stats @st))
-  (println (ave-dist-pool (second @st))))
+  (let [len (count (second (first @st)))]
+    (while (< (first (first @st)) targ)
+      (swap! st generations 1000)
+      (let [d (ave-dist-pool (second @st))]
+        (when (< (/ d len) 0.40)
+          (let [newp (rand-seq len)
+                newf (fitness newp)
+                newone (list newf newp)
+                [b p] @st]
+            (reset! st (list b (conj p newone)))
+            (println "population: " (count (second @st)))))))
+    (println (apply get-stats @st))
+    ))
 
 (defn extract-worst "returns worst entry of pool and the pool without that entry"
   [pool]
@@ -316,6 +325,11 @@
          div (* pop1 pop2)
          dlist (map #(total-dist % g2) g1)]
      (/ (apply + dlist) div))))
+
+(defn ave-dist
+  ([state] (ave-dist-pool (second pool)))
+  ([s1 s2] (ave-dist-pool (second p1) (second p2)))) 
+  
     
 (defn save-state [st]
   (let [ststr (prn-str st)
