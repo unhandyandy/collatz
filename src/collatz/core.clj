@@ -284,11 +284,12 @@
   (let [len (count (second (first @st)))]
     (while (< (first (first @st)) targ)
       (swap! st generations 1000)
-      (let [d (ave-dist-pool (second @st))]
-        (when (< (/ d len) 0.45)
-          (let [extra (rand-state len 2)]
-            (swap! st join-states extra)
-            (println "d: " d ", population: " (count (second @st)))))))
+      ;; (let [d (ave-dist-pool (second @st))]
+      ;;   (when (< (/ d len) 0.45)
+      ;;     (let [extra (rand-state len 2)]
+      ;;       (swap! st join-states extra)
+      ;;       (println "d: " d ", population: " (count (second @st))))))
+      )
     (println (apply get-stats @st))
     ))
 
