@@ -327,8 +327,8 @@
      (/ (apply + dlist) div))))
 
 (defn ave-dist
-  ([state] (ave-dist-pool (second pool)))
-  ([s1 s2] (ave-dist-pool (second p1) (second p2)))) 
+  ([state] (ave-dist-pool (second state)))
+  ([s1 s2] (ave-dist-pool (second s1) (second s2))))
   
     
 (defn save-state [st]
