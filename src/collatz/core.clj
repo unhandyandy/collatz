@@ -121,6 +121,11 @@
         (reset! bg cur)))
     @bg))
 
+(defn rand-state [len pop]
+  (let [p (rand-pool len pop)
+        b (get-best-in-pool p)]
+    (list b p)))
+
 (defn find-overlap [s1 s2]
   (let [bi (atom -1)
         prev (atom 0)
@@ -267,18 +272,23 @@
   (println (apply get-stats @st))
   (println (ave-dist-pool (second @st))))
 
+(defn join-states [[[f1 b1 :as bg1] p1 :as s1] & ss]
+  (if (empty? ss)
+    s1
+    (let [[[[f2 b2 :as bg2] p2] & sss] ss
+          bnew (if (> f1 f2) bg1 bg2)
+          pnew (concat p1 p2)]
+      (apply join-states (list bnew pnew) sss))))
+
 (defn gotarget [st targ]
   (let [len (count (second (first @st)))]
     (while (< (first (first @st)) targ)
       (swap! st generations 1000)
       (let [d (ave-dist-pool (second @st))]
-        (when (< (/ d len) 0.40)
-          (let [newp (rand-seq len)
-                newf (fitness newp)
-                newone (list newf newp)
-                [b p] @st]
-            (reset! st (list b (conj p newone)))
-            (println "population: " (count (second @st)))))))
+        (when (< (/ d len) 0.45)
+          (let [extra (rand-state len 2)]
+            (swap! st join-states extra)
+            (println "d: " d ", population: " (count (second @st)))))))
     (println (apply get-stats @st))
     ))
 
